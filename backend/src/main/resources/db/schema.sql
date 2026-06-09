@@ -1,0 +1,111 @@
+CREATE TABLE IF NOT EXISTS sys_user (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    real_name VARCHAR(50) NOT NULL,
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    id_card VARCHAR(18),
+    role_type VARCHAR(20) NOT NULL DEFAULT 'GUEST',
+    status TINYINT NOT NULL DEFAULT 1,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS price_calendar (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    room_type_id BIGINT NOT NULL,
+    rule_type VARCHAR(20) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    price_factor DECIMAL(4,2) NOT NULL DEFAULT 1.00,
+    priority INT DEFAULT 0,
+    status TINYINT NOT NULL DEFAULT 1,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS operation_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    operator_id BIGINT,
+    operator_name VARCHAR(50),
+    operator_type VARCHAR(20),
+    module VARCHAR(50),
+    action VARCHAR(50),
+    description VARCHAR(500),
+    target_id BIGINT,
+    target_type VARCHAR(50),
+    ip_address VARCHAR(50),
+    request_params TEXT,
+    result VARCHAR(20),
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS room_type (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    bed_type VARCHAR(50),
+    area DECIMAL(10,2),
+    base_price DECIMAL(10,2) NOT NULL,
+    capacity INT DEFAULT 2,
+    check_in_time VARCHAR(20) DEFAULT '14:00',
+    check_out_time VARCHAR(20) DEFAULT '12:00',
+    breakfast VARCHAR(50) DEFAULT '不含早',
+    window_type VARCHAR(50),
+    floor_info VARCHAR(100),
+    cancel_policy TEXT,
+    extra_info TEXT,
+    description TEXT,
+    facilities VARCHAR(500),
+    image_url VARCHAR(255),
+    sort_order INT DEFAULT 0,
+    status TINYINT NOT NULL DEFAULT 1,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS room (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    room_number VARCHAR(20) NOT NULL UNIQUE,
+    floor INT NOT NULL,
+    room_type_id BIGINT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE',
+    remark VARCHAR(500),
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS booking_order (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_no VARCHAR(32) NOT NULL UNIQUE,
+    user_id BIGINT,
+    room_id BIGINT NOT NULL,
+    check_in_date DATE NOT NULL,
+    check_out_date DATE NOT NULL,
+    nights INT NOT NULL,
+    total_amount DECIMAL(10,2) NOT NULL,
+    guest_name VARCHAR(50) NOT NULL,
+    guest_phone VARCHAR(20) NOT NULL,
+    guest_id_card VARCHAR(18),
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS employee (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    real_name VARCHAR(50) NOT NULL,
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    role_type VARCHAR(20) NOT NULL DEFAULT 'FRONT_DESK',
+    status TINYINT NOT NULL DEFAULT 1,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT NOT NULL DEFAULT 0
+);
