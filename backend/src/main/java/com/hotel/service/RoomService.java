@@ -2,6 +2,7 @@ package com.hotel.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.hotel.dto.OccupiedRoomDTO;
 import com.hotel.dto.RoomQueryDTO;
 import com.hotel.entity.Room;
 
@@ -13,4 +14,5 @@ public interface RoomService extends IService<Room> {
     IPage<Room> getAllRooms(int page, int pageSize);
     Room getRoomDetail(Long id);
     Room updateRoomStatus(Long id, String status);
+    List<OccupiedRoomDTO> getOccupiedRooms();
 }

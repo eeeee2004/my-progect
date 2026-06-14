@@ -66,6 +66,9 @@ export const frontDeskAPI = {
   },
   getOrderDetail(id) {
     return request.get(`/front-desk/orders/${id}`)
+  },
+  getOccupiedRooms() {
+    return request.get('/front-desk/occupied-rooms')
   }
 }
 

@@ -41,7 +41,7 @@ public class RoomController {
 
     @GetMapping("/room-types")
     public Result<List<RoomType>> getAllRoomTypes() {
-        return Result.success(roomTypeService.list());
+        return Result.success(roomTypeService.getEnabledRoomTypes());
     }
 
     @GetMapping("/room-types/{id}")

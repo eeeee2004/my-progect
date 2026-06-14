@@ -16,6 +16,7 @@ public interface BookingOrderService extends IService<BookingOrder> {
     BookingOrder checkIn(CheckInDTO checkInDTO);
     Map<String, Object> checkOut(Long orderId, CheckOutDTO checkOutDTO);
     List<BookingOrder> getFrontDeskOrders(String status, int page, int pageSize);
+    long countFrontDeskOrders(String status);
     List<BookingOrder> getTodayArrivals();
     List<BookingOrder> getTodayDepartures();
 }

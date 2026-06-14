@@ -2,7 +2,7 @@
   <div>
     <div class="card-header">
       <h2>房态实时看板</h2>
-      <el-button type="primary" @click="loadRooms" :loading="loading">
+      <el-button type="primary" @click="loadAllData" :loading="loading">
         <el-icon><Refresh /></el-icon> 刷新
       </el-button>
     </div>
@@ -42,7 +42,7 @@
 
     <div class="room-grid">
       <div
-        v-for="room in rooms"
+        v-for="room in roomsWithGuests"
         :key="room.id"
         class="room-item"
         :class="'room-' + room.status.toLowerCase()"
@@ -51,19 +51,32 @@
         <p class="room-num">{{ room.roomNumber }}</p>
         <p class="room-floor">{{ room.floor }}楼</p>
         <p class="room-status">{{ statusMap[room.status] }}</p>
+        <p class="room-guest" v-if="room.guestName">{{ room.guestName }}</p>
       </div>
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="'房间 ' + currentRoom?.roomNumber + ' 操作'" width="400px">
-      <p>当前状态: <el-tag :type="statusTagType(currentRoom?.status)">{{ statusMap[currentRoom?.status] }}</el-tag></p>
-      <p style="margin-top:16px">修改状态:</p>
-      <el-select v-model="newStatus" style="width:100%;margin-top:8px">
-        <el-option label="空闲" value="AVAILABLE" />
-        <el-option label="已预订" value="BOOKED" />
-        <el-option label="已入住" value="OCCUPIED" />
-        <el-option label="待清洁" value="CLEANING" />
-        <el-option label="维修中" value="MAINTENANCE" />
-      </el-select>
+    <el-dialog v-model="dialogVisible" :title="'房间 ' + currentRoom?.roomNumber + ' 操作'" width="450px">
+      <div v-if="currentRoom">
+        <p>当前状态: <el-tag :type="statusTagType(currentRoom.status)">{{ statusMap[currentRoom.status] }}</el-tag></p>
+        <p v-if="currentRoom.guestName" style="margin-top:8px">
+          住客: <strong>{{ currentRoom.guestName }}</strong>  {{ currentRoom.guestPhone }}
+        </p>
+        <el-divider v-if="currentRoom.status === 'BOOKED' || currentRoom.status === 'OCCUPIED'" />
+        <div v-if="currentRoom.status === 'BOOKED' && currentRoom.orderId" style="margin-bottom:12px">
+          <el-button type="primary" size="small" @click="quickCheckIn">一键入住</el-button>
+        </div>
+        <div v-if="currentRoom.status === 'OCCUPIED' && currentRoom.orderId" style="margin-bottom:12px">
+          <el-button type="warning" size="small" @click="quickCheckOut">退房结算</el-button>
+        </div>
+        <p style="margin-top:16px">修改状态:</p>
+        <el-select v-model="newStatus" style="width:100%;margin-top:8px">
+          <el-option label="空闲" value="AVAILABLE" />
+          <el-option label="已预订" value="BOOKED" />
+          <el-option label="已入住" value="OCCUPIED" />
+          <el-option label="待清洁" value="CLEANING" />
+          <el-option label="维修中" value="MAINTENANCE" />
+        </el-select>
+      </div>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleStatusChange" :loading="updating">确认</el-button>
@@ -73,11 +86,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { frontDeskAPI } from '@/api'
 import { ElMessage } from 'element-plus'
 
+const router = useRouter()
 const rooms = ref([])
+const occupiedData = ref([])
 const loading = ref(false)
 const dialogVisible = ref(false)
 const currentRoom = ref(null)
@@ -90,11 +106,22 @@ function statusTagType(s) {
   return { AVAILABLE: 'success', BOOKED: 'warning', OCCUPIED: 'danger', CLEANING: 'info', MAINTENANCE: 'danger' }[s] || 'info'
 }
 
-async function loadRooms() {
+const roomsWithGuests = computed(() => {
+  return rooms.value.map(r => {
+    const od = occupiedData.value.find(o => o.roomId === r.id)
+    return od ? { ...r, guestName: od.guestName, guestPhone: od.guestPhone, orderId: od.orderId } : r
+  })
+})
+
+async function loadAllData() {
   loading.value = true
   try {
-    const res = await frontDeskAPI.getAllRooms({ page: 1, pageSize: 50 })
-    rooms.value = res.data.records || []
+    const [roomsRes, occupiedRes] = await Promise.all([
+      frontDeskAPI.getAllRooms({ page: 1, pageSize: 50 }),
+      frontDeskAPI.getOccupiedRooms()
+    ])
+    rooms.value = roomsRes.data.records || []
+    occupiedData.value = occupiedRes.data || []
   } finally { loading.value = false }
 }
 
@@ -102,6 +129,24 @@ function showRoomActions(room) {
   currentRoom.value = room
   newStatus.value = room.status
   dialogVisible.value = true
+}
+
+async function quickCheckIn() {
+  try {
+    await frontDeskAPI.checkIn({ orderId: currentRoom.value.orderId })
+    ElMessage.success('入住办理成功')
+    dialogVisible.value = false
+    loadAllData()
+  } catch {}
+}
+
+async function quickCheckOut() {
+  try {
+    const res = await frontDeskAPI.checkOut(currentRoom.value.orderId, { extraCharge: 0 })
+    ElMessage.success('退房完成，费用 ¥' + (res.data?.totalAmount || 0))
+    dialogVisible.value = false
+    loadAllData()
+  } catch {}
 }
 
 async function handleStatusChange() {
@@ -114,11 +159,11 @@ async function handleStatusChange() {
     await frontDeskAPI.updateRoomStatus(currentRoom.value.id, newStatus.value)
     ElMessage.success('状态更新成功')
     dialogVisible.value = false
-    loadRooms()
+    loadAllData()
   } catch {} finally { updating.value = false }
 }
 
-onMounted(loadRooms)
+onMounted(loadAllData)
 </script>
 
 <style scoped>
@@ -136,4 +181,5 @@ onMounted(loadRooms)
 .room-num { font-size: 20px; font-weight: bold; }
 .room-floor { font-size: 12px; opacity: 0.7; }
 .room-status { font-size: 13px; margin-top: 4px; }
+.room-guest { font-size: 12px; margin-top: 2px; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style>

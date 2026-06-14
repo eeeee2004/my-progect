@@ -222,7 +222,17 @@ public class BookingOrderServiceImpl extends ServiceImpl<BookingOrderMapper, Boo
         if (status != null && !status.isEmpty()) {
             wrapper.eq(BookingOrder::getStatus, status);
         }
-        return this.page(new Page<>(page, pageSize), wrapper).getRecords();
+        Page<BookingOrder> result = this.page(new Page<>(page, pageSize), wrapper);
+        return result.getRecords();
+    }
+
+    @Override
+    public long countFrontDeskOrders(String status) {
+        LambdaQueryWrapper<BookingOrder> wrapper = new LambdaQueryWrapper<>();
+        if (status != null && !status.isEmpty()) {
+            wrapper.eq(BookingOrder::getStatus, status);
+        }
+        return this.count(wrapper);
     }
 
     @Override

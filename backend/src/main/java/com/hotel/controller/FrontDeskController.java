@@ -4,6 +4,7 @@ import com.hotel.common.PageResult;
 import com.hotel.common.Result;
 import com.hotel.dto.CheckInDTO;
 import com.hotel.dto.CheckOutDTO;
+import com.hotel.dto.OccupiedRoomDTO;
 import com.hotel.entity.BookingOrder;
 import com.hotel.entity.Room;
 import com.hotel.service.BookingOrderService;
@@ -11,8 +12,7 @@ import com.hotel.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/front-desk")
@@ -28,6 +28,11 @@ public class FrontDeskController {
             @RequestParam(defaultValue = "50") int pageSize) {
         var pageResult = roomService.getAllRooms(page, pageSize);
         return Result.success(PageResult.of(pageResult.getRecords(), pageResult.getTotal(), page, pageSize));
+    }
+
+    @GetMapping("/occupied-rooms")
+    public Result<List<OccupiedRoomDTO>> getOccupiedRooms() {
+        return Result.success(roomService.getOccupiedRooms());
     }
 
     @PutMapping("/rooms/{id}/status")
@@ -46,7 +51,8 @@ public class FrontDeskController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize) {
         List<BookingOrder> records = bookingOrderService.getFrontDeskOrders(status, page, pageSize);
-        return Result.success(PageResult.of(records, 0, page, pageSize));
+        long total = bookingOrderService.countFrontDeskOrders(status);
+        return Result.success(PageResult.of(records, total, page, pageSize));
     }
 
     @PostMapping("/check-in")

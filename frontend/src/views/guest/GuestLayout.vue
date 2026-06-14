@@ -16,7 +16,7 @@
     </el-header>
     <el-main>
       <div class="page-container">
-        <router-view />
+        <router-view :key="$route.fullPath" />
       </div>
     </el-main>
   </el-container>
